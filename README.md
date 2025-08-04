@@ -32,6 +32,8 @@ $$
 
 for a total number of signalling layers $n$ (layer range), where, at each layer $k$ ($0\leq k\leq n-1$), $\ell_{ij,k}$ is the length of the shared edge between cells $i$ and neighbouring cell $j$, and $P_{j,k}$ is the cross-sectional perimeter of cell $j$ at that layer. $\mathbf{nn}(i)$ is the set of nearest neighbours of cell $i$, and $\omega_k$ is the signalling weight of layer $k$. The total number of signalling layers can be defined by $n=L/\mathrm{\Delta}L$, where $L$ is the actual apical-to-basal length, determined experimentally, and $\mathrm{\Delta}L$ is the width of each layer.
 
+<img width="783" height="404" alt="image" src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" />
+
 ## Usage
 
 All functionality is provided in a single Jupyter Notebook, designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and SOP labels for three wing discs.
@@ -161,5 +163,23 @@ fancy_plot(spacing_dict_exp, Lmax_list, 'exp', wing_regions, degenplotQ=True, yl
 
 <img width="527" height="390" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
 
-These plots provide intuitive insight into how geometry and signalling range influence the emergent spacing of SOP cells.
+## System requirements and performance
 
+This codebase was developed and tested on Python 3.12.3 under both Windows 10 and Windows 11. No installation procedure is required beyond installing standard Python 3 and the key dependencies. All scripts should remain compatible with standard Python 3 distributions on other operating systems.
+
+## License
+
+This project is openly distributed under the MIT License. This license allows unrestricted use, redistribution, and modification, provided that proper attribution to the original creators is maintained.
+
+## Contact information
+
+For further information, contributions, or queries, please contact:
+
+- **Email**: [fp409@cam.ac.uk](mailto:fp409@cam.ac.uk)
+- **GitHub**: [fberkemeier](https://github.com/fberkemeier)
+
+We welcome discussions via GitHub to improve the model or address potential issues.
+
+## References
+
+Paci, G., Berkemeier, F., Baum, B., Page, K.M., & Mao, Y. 3D cell topology regulates signalling range to promote precise patterning. bioRxiv preprint (2025).
