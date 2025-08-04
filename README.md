@@ -84,7 +84,7 @@ Neighbours are categorized according to:
 
 These structures allow the model to distinguish between interactions occurring at the surface and those mediated by deeper 3D contacts.
 
-### Visualisation
+### Examples
 
 The notebook includes built-in visualisation tools to aid interpretation of simulation results. Below are a few examples:
 
@@ -97,6 +97,22 @@ Example output:
 - Black edges: apical contacts.
 - Light blue edges: exclusively non-apical contacts.
 
+```
+wing_region = 'wd_1'
+def omega_exp(z):
+    return 40 * np.exp(-0.4 * z)
+Lmax = 0.5
+height_list = [85., 170., 105.]
+for Lmax in [Lmax]:
+    result = compute_band_distance(wing_region, omega_func=omega_exp, Lmax=Lmax,
+        sim_number=1, quad_method='simpson', heights=height_list, plotQ=True,
+        normalQ=False, alpha=0, degen_T=1., y_shift_steps=20
+    )
+```
+
+<img width="537" height="530" alt="image" src="https://github.com/user-attachments/assets/0625fd71-70bb-4003-b5fb-5b1e8216fa80" />
+
+
 #### SOP spacing
 
 To quantify the effect of 3D connectivity on pattern formation, SOP spacing is computed as the shortest-path distance between SOP cells in the apical contact graph, restricted to a defined region of interest. This metric is plotted across different simulations and experimental conditions.
@@ -106,6 +122,44 @@ Example output:
 - SOP spacing vs. straightening percentage (geometry manipulation).
 - Each curve corresponds to a specific wing disc.
 - Degenerate patterns (e.g. excessive crowding, irregular spacing) are flagged in red.
+
+```
+# exponential signalling
+def omega_exp(z):
+    return 10 * np.exp(-0.2 * z) + 2
+
+wing_regions = ['wd_1', 'wd_2', 'wd_3']
+sim_number = 20
+threshold = 0.8
+Lmax_list = np.linspace(0.5, 25, 15)
+height_list = [85., 170., 105.]
+degen_T = 1.
+normalQ = False
+
+spacing_dict_exp = {region: [] for region in wing_regions}
+it=0
+for Lmax in Lmax_list:
+    for region in wing_regions:
+        d, vr, degenQ = compute_band_distance(
+            region,
+            omega_func=omega_exp,
+            Lmax=Lmax,
+            sim_number=sim_number,
+            quad_method='simpson',
+            heights=height_list,
+            degen_T=degen_T, normalQ=normalQ,
+            y_shift_steps=20
+        )
+        d = d[threshold]
+        vr = vr[threshold]
+        spacing_dict_exp[region].append([d,vr,degenQ])
+        it=it+1
+        print(f'{it}/{len(Lmax_list)*3}',end='\r')
+
+fancy_plot(spacing_dict_exp, Lmax_list, 'exp', wing_regions, degenplotQ=True, ylim=(1.1,2.65), errorbarQ=False, saveQ=False)
+```
+
+<img width="527" height="390" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
 
 These plots provide intuitive insight into how geometry and signalling range influence the emergent spacing of SOP cells.
 
