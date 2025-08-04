@@ -37,7 +37,7 @@ for a total number of signalling layers $n$ (layer range), where, at each layer 
 </p>
 
 <p align="center"><em>
-Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell–cell interactions.
+Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell–cell interactions. Adapted from Paci et al. (2025).
 </em></p>
 
 ## Usage
