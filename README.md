@@ -33,3 +33,65 @@ $$
 for a total number of signalling layers $n$ (layer range), where, at each layer $k$ ($0\leq k\leq n-1$), $\ell_{ij,k}$ is the length of the shared edge between cells $i$ and neighbouring cell $j$, and $P_{j,k}$ is the cross-sectional perimeter of cell $j$ at that layer. $\mathbf{nn}(i)$ is the set of nearest neighbours of cell $i$, and $\omega_k$ is the signalling weight of layer $k$. The total number of signalling layers can be defined by $n=L/\mathrm{\Delta}L$, where $L$ is the actual apical-to-basal length, determined experimentally, and $\mathrm{\Delta}L$ is the width of each layer.
 
 ## Usage
+
+All functionality is provided in a single Jupyter Notebook, designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and SOP labels for three wing discs.
+
+### Required libraries
+
+- `numpy`, `pandas` – numerical and tabular data processing  
+- `matplotlib` – visualisation  
+- `scipy` – integration, curve fitting, and optimisation  
+- `openpyxl` – Excel input/output  
+- `os`, `time`, `math`, `random`, `itertools` – various built-in utilities
+
+### Structure and functionality
+
+The notebook is divided into the following sections:
+
+- **Library imports**
+- **Main functions**
+- **Parameter setup and data loading**
+- **Custom plotting and visualisation**
+
+Each simulation produces a 3D lateral inhibition pattern and allows for comparison between conditions (e.g. different depths or straightening factors).
+
+### Model parameters
+
+The Notch–Delta signalling system is defined by:
+
+- `k`, `h`: Hill coefficients determining cooperativity
+- `Ka`, `Kr`: thresholds for Notch activation and Delta repression
+- `ν`: relative decay rate of Delta vs Notch
+- `t_final`: total simulation time
+- `dt`: time step size
+
+### Wing disc datasets and metadata
+
+The three discs are identified by:
+- `wing_regions`: dataset names – `small_14_03`, `small_17_03`, `small_21_03`
+- `wd_dict`: maps dataset name to a numeric label for plotting
+- `gap_dict`: vertical offsets to prevent overlap in visualisations
+- `n_dict`: number of slices (depth layers) per dataset
+- `chunk_dict`: number of slices grouped into a signalling layer
+
+### Signalling configuration
+
+- `signalling_labels_dict`: maps each dataset to the set of cells competent for Notch–Delta signalling
+- `notch_data`: experimental Notch intensity profile across the apico-basal axis (used to define the depth-dependent weights)
+
+### Data loading
+
+The following data structures are created from the Excel files:
+
+- `path_dict`: maps dataset name to the corresponding `.xlsx` file path
+- `sheets_dict`: loads all layers as separate Excel sheets
+- `A_dict`: stores normalised adjacency matrices for each depth
+- `centroids_dict`: stores 3D coordinates of each cell’s centroid
+
+### Neighbourhood structure
+
+- `signalling_labels_apical_dict`: for each dataset, lists signalling cells that are connected at the apical layer (layer 0)
+- `apical_neighbours_dict`: maps each signalling cell to its apical neighbours
+- `nonapical_neighbours_dict`: maps each signalling cell to its lateral (non-apical) neighbours
+
+These structures allow the model to distinguish between interactions occurring at the surface and those mediated by deeper 3D contacts.
