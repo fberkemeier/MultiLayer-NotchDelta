@@ -40,12 +40,9 @@ for a total number of signalling layers $n$ (layer range), where, at each layer 
 Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell–cell interactions.
 </em></p>
 
-
-
-
 ## Usage
 
-All functionality is provided in a single Jupyter Notebook, designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and SOP labels for three wing discs.
+All functionality is provided in a single Jupyter Notebook (`msm_notch_delta.ipynb`), designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and SOP labels for three wing discs.
 
 ### Structure and functionality
 
@@ -173,7 +170,7 @@ fancy_plot(spacing_dict_exp, Lmax_list, 'exp', wing_regions, degenplotQ=True, yl
   <img width="527" height="390" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
 </div>
 
-## System requirements and performance
+## System requirements
 
 This codebase was developed and tested on Python 3.12.3 under both Windows 10 and Windows 11. No installation procedure is required beyond installing standard Python 3 and the key dependencies. All scripts should remain compatible with standard Python 3 distributions on other operating systems.
 
