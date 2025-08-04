@@ -1,6 +1,6 @@
 # A Multi-layer Model of Notch-Delta Signalling
 
-We introduce a toolkit for modelling and analysing 3D Notch–Delta signalling in multi-layered epithelial tissues, aimed at exploring how cell geometry and depth affect lateral inhibition.
+We present a computational toolkit for simulating and analysing Notch–Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell–cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see Paci et al. (2025).
 
 ## Mathematical model
 
@@ -32,7 +32,16 @@ $$
 
 for a total number of signalling layers $n$ (layer range), where, at each layer $k$ ($0\leq k\leq n-1$), $\ell_{ij,k}$ is the length of the shared edge between cells $i$ and neighbouring cell $j$, and $P_{j,k}$ is the cross-sectional perimeter of cell $j$ at that layer. $\mathbf{nn}(i)$ is the set of nearest neighbours of cell $i$, and $\omega_k$ is the signalling weight of layer $k$. The total number of signalling layers can be defined by $n=L/\mathrm{\Delta}L$, where $L$ is the actual apical-to-basal length, determined experimentally, and $\mathrm{\Delta}L$ is the width of each layer.
 
-<img width="783" height="404" alt="image" src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" width="783" height="404" alt="Multi-layer Signalling Model">
+</p>
+
+<p align="center"><em>
+Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell–cell interactions.
+</em></p>
+
+
+
 
 ## Usage
 
@@ -111,9 +120,9 @@ for Lmax in [Lmax]:
         normalQ=False, alpha=0, degen_T=1., y_shift_steps=20
     )
 ```
-
-<img width="537" height="530" alt="image" src="https://github.com/user-attachments/assets/0625fd71-70bb-4003-b5fb-5b1e8216fa80" />
-
+<div align="center">
+  <img width="537" height="530" alt="image" src="https://github.com/user-attachments/assets/0625fd71-70bb-4003-b5fb-5b1e8216fa80" />
+</div>
 
 #### SOP spacing
 
@@ -160,8 +169,9 @@ for Lmax in Lmax_list:
 
 fancy_plot(spacing_dict_exp, Lmax_list, 'exp', wing_regions, degenplotQ=True, ylim=(1.1,2.65), errorbarQ=False, saveQ=False)
 ```
-
-<img width="527" height="390" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
+<div align="center">
+  <img width="527" height="390" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
+</div>
 
 ## System requirements and performance
 
