@@ -42,7 +42,7 @@ Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across s
 
 ## Usage
 
-All functionality is provided in a single Jupyter Notebook (`msm_notch_delta.ipynb`), designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and SOP labels for three wing discs.
+All functionality is provided in a single Jupyter Notebook (`msm_notch_delta.ipynb`), designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and signalling cell labels for three wing discs.
 
 ### Structure and functionality
 
