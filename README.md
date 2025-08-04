@@ -61,6 +61,7 @@ The Notch–Delta signalling system is defined by:
 ### Wing disc datasets and metadata
 
 The three discs are identified by:
+
 - `wing_regions`: dataset names – `wd_1`, `wd_2`, `wd_3`
 - `wd_dict`: maps dataset name to a numeric label for plotting
 - `gap_dict`: disc-specific vertical layer heights
@@ -76,9 +77,8 @@ The three discs are identified by:
 The following data structures are created from the Excel files in the `data/` folder:
 
 - `path_dict`: maps dataset name to the corresponding `.xlsx` file path
-- `sheets_dict`: loads all layers as separate Excel sheets
-- `A_dict`: stores normalised adjacency matrices for each depth
-- `centroids_dict`: stores 3D coordinates of each cell’s centroid
+- `A_dict`: stores normalised adjacency matrices for each wing disc, with each entry returning a list of matrices corresponding to successive tissue layers
+- `centroids_dict`: stores 2D centroid coordinates for each cell, returned as a list (one per layer) for each wing disc
 
 ### Neighbourhood structure
 
