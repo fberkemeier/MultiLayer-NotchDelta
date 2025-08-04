@@ -36,24 +36,17 @@ for a total number of signalling layers $n$ (layer range), where, at each layer 
 
 All functionality is provided in a single Jupyter Notebook, designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and SOP labels for three wing discs.
 
-### Required libraries
-
-- `numpy`, `pandas` – numerical and tabular data processing  
-- `matplotlib` – visualisation  
-- `scipy` – integration, curve fitting, and optimisation  
-- `openpyxl` – Excel input/output  
-- `os`, `time`, `math`, `random`, `itertools` – various built-in utilities
-
 ### Structure and functionality
 
 The notebook is divided into the following sections:
 
-- **Library imports**
-- **Main functions**
-- **Parameter setup and data loading**
-- **Custom plotting and visualisation**
+- **Library imports** – Imports all necessary Python libraries, including numerical computation (`numpy`, `scipy`), plotting (`matplotlib`), file I/O (`pandas`, `openpyxl`), and optimisation tools.
+- **Main functions** – Contains the key computational routines for simulating Notch–Delta dynamics across a 3D tissue structure, including neighbour detection, signalling calculations, and SOP identification.
+- **Parameter setup and data loading** – Defines model parameters (e.g. Notch–Delta interaction constants, simulation time, layer configuration) and loads input data such as adjacency matrices, centroids, and cell-specific signalling labels from the `data/` folder for three wing discs.
+- **Data fitting** – Processes and fits the experimental Notch intensity profile along the apico-basal axis to guide the construction of depth-dependent signalling weight profiles.
+- **Custom plotting and visualisation** – Provides tools to visualise simulation outcomes, such as SOP spacing distributions, network graphs, and comparative plots across experimental conditions or parameter sets.
 
-Each simulation produces a 3D lateral inhibition pattern and allows for comparison between conditions (e.g. different depths or straightening factors).
+Each simulation produces a 3D lateral inhibition pattern and allows for comparison between conditions (e.g. different depths or straightening factors). The number of simulations (`sim_number`) used in SOP spacing plots is set to 20 by default, but increasing this value can improve accuracy at the cost of longer computation times.
 
 ### Model parameters
 
@@ -68,11 +61,10 @@ The Notch–Delta signalling system is defined by:
 ### Wing disc datasets and metadata
 
 The three discs are identified by:
-- `wing_regions`: dataset names – `small_14_03`, `small_17_03`, `small_21_03`
+- `wing_regions`: dataset names – `wd_1`, `wd_2`, `wd_3`
 - `wd_dict`: maps dataset name to a numeric label for plotting
-- `gap_dict`: vertical offsets to prevent overlap in visualisations
-- `n_dict`: number of slices (depth layers) per dataset
-- `chunk_dict`: number of slices grouped into a signalling layer
+- `gap_dict`: disc-specific vertical layer heights
+- `n_dict`: number of depth layers per dataset
 
 ### Signalling configuration
 
@@ -81,7 +73,7 @@ The three discs are identified by:
 
 ### Data loading
 
-The following data structures are created from the Excel files:
+The following data structures are created from the Excel files in the `data/` folder:
 
 - `path_dict`: maps dataset name to the corresponding `.xlsx` file path
 - `sheets_dict`: loads all layers as separate Excel sheets
