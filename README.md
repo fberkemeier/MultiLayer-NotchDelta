@@ -33,7 +33,7 @@ $$
 for a total number of signalling layers $n$ (layer range), where, at each layer $k$ ($0\leq k\leq n-1$), $\ell_{ij,k}$ is the length of the shared edge between cells $i$ and neighbouring cell $j$, and $P_{j,k}$ is the cross-sectional perimeter of cell $j$ at that layer. $\mathbf{nn}(i)$ is the set of nearest neighbours of cell $i$, and $\omega_k$ is the signalling weight of layer $k$. The total number of signalling layers can be defined by $n=L/\mathrm{\Delta}L$, where $L$ is the actual apical-to-basal length, determined experimentally, and $\mathrm{\Delta}L$ is the width of each layer.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" width="783" height="404" alt="Multi-layer Signalling Model">
+  <img src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" width="500" alt="Multi-layer Signalling Model">
 </p>
 
 <p align="center"><em>
@@ -167,7 +167,7 @@ for Lmax in Lmax_list:
 fancy_plot(spacing_dict_exp, Lmax_list, 'exp', wing_regions, degenplotQ=True, ylim=(1.1,2.65), errorbarQ=False, saveQ=False)
 ```
 <div align="center">
-  <img width="527" height="390" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
+  <img width="400" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
 </div>
 
 ## System requirements
