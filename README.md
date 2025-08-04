@@ -48,7 +48,7 @@ The notebook is divided into the following sections:
 
 Each simulation produces a 3D lateral inhibition pattern and allows for comparison between conditions (e.g. different depths or straightening factors). The number of simulations (`sim_number`) used in SOP spacing plots is set to 20 by default, but increasing this value can improve accuracy at the cost of longer computation times.
 
-### Model parameters
+### Model parameters, wing disc datasets and metadata
 
 The Notch–Delta signalling system is defined by:
 
@@ -58,8 +58,6 @@ The Notch–Delta signalling system is defined by:
 - `t_final`: total simulation time
 - `dt`: time step size
 
-### Wing disc datasets and metadata
-
 The three discs are identified by:
 
 - `wing_regions`: dataset names – `wd_1`, `wd_2`, `wd_3`
@@ -67,12 +65,10 @@ The three discs are identified by:
 - `gap_dict`: disc-specific vertical layer heights
 - `n_dict`: number of depth layers per dataset
 
-### Signalling configuration
+Signalling labels and intensity are stored in:
 
 - `signalling_labels_dict`: maps each dataset to the set of cells competent for Notch–Delta signalling
 - `notch_data`: experimental Notch intensity profile across the apico-basal axis (used to define the depth-dependent weights)
-
-### Data loading
 
 The following data structures are created from the Excel files in the `data/` folder:
 
@@ -80,10 +76,36 @@ The following data structures are created from the Excel files in the `data/` fo
 - `A_dict`: stores normalised adjacency matrices for each wing disc, with each entry returning a list of matrices corresponding to successive tissue layers
 - `centroids_dict`: stores 2D centroid coordinates for each cell, returned as a list (one per layer) for each wing disc
 
-### Neighbourhood structure
+Neighbours are categorized according to:
 
 - `signalling_labels_apical_dict`: for each dataset, lists signalling cells that are connected at the apical layer (layer 0)
 - `apical_neighbours_dict`: maps each signalling cell to its apical neighbours
 - `nonapical_neighbours_dict`: maps each signalling cell to its lateral (non-apical) neighbours
 
 These structures allow the model to distinguish between interactions occurring at the surface and those mediated by deeper 3D contacts.
+
+### Visualisation
+
+The notebook includes built-in visualisation tools to aid interpretation of simulation results. Below are a few examples:
+
+#### Graph representation
+
+Cells are represented as nodes in a multi-layered graph, with edges indicating contact-based signalling potential. The apical and sub-apical contacts are extracted from segmented imaging data and rendered using `matplotlib`. Edges may be colour-coded to distinguish contact types (e.g. apical vs. non-apical).
+
+Example output:
+- Red nodes: SOP cells (selected based on Delta threshold).
+- Black edges: apical contacts.
+- Light blue edges: exclusively non-apical contacts.
+
+#### SOP spacing
+
+To quantify the effect of 3D connectivity on pattern formation, SOP spacing is computed as the shortest-path distance between SOP cells in the apical contact graph, restricted to a defined region of interest. This metric is plotted across different simulations and experimental conditions.
+
+Example output:
+- SOP spacing vs. signalling depth.
+- SOP spacing vs. straightening percentage (geometry manipulation).
+- Each curve corresponds to a specific wing disc.
+- Degenerate patterns (e.g. excessive crowding, irregular spacing) are flagged in red.
+
+These plots provide intuitive insight into how geometry and signalling range influence the emergent spacing of SOP cells.
+
