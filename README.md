@@ -1,6 +1,6 @@
-# A Multi-layer Model of Notch-Delta Signalling
+﻿# A Multi-layer Model of Notch-Delta Signalling
 
-We present a computational toolkit for simulating and analysing Notch–Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell–cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see Paci et al. (2025).
+We present a computational toolkit for simulating and analysing Notchâ€“Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cellâ€“cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see Paci et al. (2025).
 
 ## Mathematical model
 
@@ -37,142 +37,66 @@ for a total number of signalling layers $n$ (layer range), where, at each layer 
 </p>
 
 <p align="center"><em>
-Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell–cell interactions. Adapted from Paci et al. (2025).
+Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cellâ€“cell interactions. Adapted from Paci et al. (2025).
 </em></p>
 
 ## Usage
 
-All functionality is provided in a single Jupyter Notebook (`msm_notch_delta.ipynb`), designed for use with the standard Python scientific stack. The code can be run in any environment supporting Jupyter (e.g. [Anaconda](https://www.anaconda.com/)). All relevant data is stored in the `data/` folder and includes adjacency matrices, edge data, centroid positions, and signalling cell labels for three wing discs.
+The core implementation is in `src/msm_model.py`, and the interactive workflows are provided in `notebooks/msm_notebook.ipynb`.
+
+### Quick setup
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### Run the notebook
+
+```powershell
+jupyter notebook notebooks/msm_notebook.ipynb
+```
+
+The first notebook cell is configured to import from `src/`:
+
+```python
+import sys
+from pathlib import Path
+
+repo_root = Path.cwd()
+if not (repo_root / 'src').exists():
+    repo_root = repo_root.parent
+
+sys.path.insert(0, str(repo_root / 'src'))
+from msm_model import *
+```
+
+### Run from a Python script/session
+
+```powershell
+$env:PYTHONPATH="src"
+python -c "import msm_model; print('msm_model import: OK')"
+```
+
+### Data and outputs
+
+- Input datasets are expected under `data/` at repository root.
+- Figures are written to `figures/`.
+- Sensitivity-analysis outputs are written under `data/sensitivity_analysis/`.
 
 ### Structure and functionality
 
 The notebook is divided into the following sections:
 
-- **Library imports** – Imports all necessary Python libraries, including numerical computation (`numpy`, `scipy`), plotting (`matplotlib`), file I/O (`pandas`, `openpyxl`), and optimisation tools.
-- **Main functions** – Contains the key computational routines for simulating Notch–Delta dynamics across a 3D tissue structure, including neighbour detection, signalling calculations, and SOP identification.
-- **Parameter setup and data loading** – Defines model parameters (e.g. Notch–Delta interaction constants, simulation time, layer configuration) and loads input data such as adjacency matrices, centroids, and cell-specific signalling labels from the `data/` folder for three wing discs.
-- **Data fitting** – Processes and fits the experimental Notch intensity profile along the apico-basal axis to guide the construction of depth-dependent signalling weight profiles.
-- **Custom plotting and visualisation** – Provides tools to visualise simulation outcomes, such as SOP spacing distributions, network graphs, and comparative plots across experimental conditions or parameter sets.
-
-Each simulation produces a 3D lateral inhibition pattern and allows for comparison between conditions (e.g. different depths or straightening factors). The number of simulations (`sim_number`) used in SOP spacing plots is set to 20 by default, but increasing this value can improve accuracy at the cost of longer computation times.
-
-### Model parameters, wing disc datasets and metadata
-
-The Notch–Delta signalling system is defined by:
-
-- `k`, `h`: Hill coefficients determining cooperativity
-- `Ka`, `Kr`: thresholds for Notch activation and Delta repression
-- `ν`: relative decay rate of Delta vs Notch
-- `t_final`: total simulation time
-- `dt`: time step size
-
-The three discs are identified by:
-
-- `wing_regions`: dataset names – `wd_1`, `wd_2`, `wd_3`
-- `wd_dict`: maps dataset name to a numeric label for plotting
-- `gap_dict`: disc-specific vertical layer heights
-- `n_dict`: number of depth layers per dataset
-
-Signalling labels and intensity are stored in:
-
-- `signalling_labels_dict`: maps each dataset to the set of cells competent for Notch–Delta signalling
-- `notch_data`: experimental Notch intensity profile across the apico-basal axis (used to define the depth-dependent weights)
-
-The following data structures are created from the Excel files in the `data/` folder:
-
-- `path_dict`: maps dataset name to the corresponding `.xlsx` file path
-- `A_dict`: stores normalised adjacency matrices for each wing disc, with each entry returning a list of matrices corresponding to successive tissue layers
-- `centroids_dict`: stores 2D centroid coordinates for each cell, returned as a list (one per layer) for each wing disc
-
-Neighbours are categorized according to:
-
-- `signalling_labels_apical_dict`: for each dataset, lists signalling cells that are connected at the apical layer (layer 0)
-- `apical_neighbours_dict`: maps each signalling cell to its apical neighbours
-- `nonapical_neighbours_dict`: maps each signalling cell to its lateral (non-apical) neighbours
-
-These structures allow the model to distinguish between interactions occurring at the surface and those mediated by deeper 3D contacts.
-
-### Examples
-
-The notebook includes built-in visualisation tools to aid interpretation of simulation results. Below are a few examples:
-
-#### Graph representation
-
-Cells are represented as nodes in a multi-layered graph, with edges indicating contact-based signalling potential. The apical and sub-apical contacts are extracted from segmented imaging data and rendered using `matplotlib`. Edges may be colour-coded to distinguish contact types (e.g. apical vs. non-apical).
-
-Example output:
-- Red nodes: SOP cells (selected based on Delta threshold).
-- Black edges: apical contacts.
-- Light blue edges: exclusively non-apical contacts.
-
-```
-wing_region = 'wd_1'
-def omega_exp(z):
-    return 40 * np.exp(-0.4 * z)
-Lmax = 0.5
-height_list = [85., 170., 105.]
-for Lmax in [Lmax]:
-    result = compute_band_distance(wing_region, omega_func=omega_exp, Lmax=Lmax,
-        sim_number=1, quad_method='simpson', heights=height_list, plotQ=True,
-        normalQ=False, alpha=0, degen_T=1., y_shift_steps=20
-    )
-```
-<div align="center">
-  <img width="537" height="530" alt="image" src="https://github.com/user-attachments/assets/0625fd71-70bb-4003-b5fb-5b1e8216fa80" />
-</div>
-
-#### SOP spacing
-
-To quantify the effect of 3D connectivity on pattern formation, SOP spacing is computed as the shortest-path distance between SOP cells in the apical contact graph, restricted to a defined region of interest. This metric is plotted across different simulations and experimental conditions.
-
-Example output:
-- SOP spacing vs. signalling depth.
-- SOP spacing vs. straightening percentage (geometry manipulation).
-- Each curve corresponds to a specific wing disc.
-- Degenerate patterns (e.g. excessive crowding, irregular spacing) are flagged in red.
-
-```
-# exponential signalling
-def omega_exp(z):
-    return 10 * np.exp(-0.2 * z) + 2
-
-wing_regions = ['wd_1', 'wd_2', 'wd_3']
-sim_number = 20
-threshold = 0.8
-Lmax_list = np.linspace(0.5, 25, 15)
-height_list = [85., 170., 105.]
-degen_T = 1.
-normalQ = False
-
-spacing_dict_exp = {region: [] for region in wing_regions}
-it=0
-for Lmax in Lmax_list:
-    for region in wing_regions:
-        d, vr, degenQ = compute_band_distance(
-            region,
-            omega_func=omega_exp,
-            Lmax=Lmax,
-            sim_number=sim_number,
-            quad_method='simpson',
-            heights=height_list,
-            degen_T=degen_T, normalQ=normalQ,
-            y_shift_steps=20
-        )
-        d = d[threshold]
-        vr = vr[threshold]
-        spacing_dict_exp[region].append([d,vr,degenQ])
-        it=it+1
-        print(f'{it}/{len(Lmax_list)*3}',end='\r')
-
-fancy_plot(spacing_dict_exp, Lmax_list, 'exp', wing_regions, degenplotQ=True, ylim=(1.1,2.65), errorbarQ=False, saveQ=False)
-```
-<div align="center">
-  <img width="400" alt="image" src="https://github.com/user-attachments/assets/8b6e0c46-51f3-4338-8a47-7dab86d1bf0e" />
-</div>
+- **Imports and model access** - Loads dependencies and imports MSM functions from `src/msm_model.py`.
+- **Main simulations** - Runs Notch-Delta simulations for selected wing disc datasets.
+- **Spacing and sensitivity analyses** - Computes SOP spacing and parameter heatmaps.
+- **Visualisation tools** - Produces graph-based and summary plots, saved to `figures/` when enabled.
 
 ## System requirements
 
-This codebase was developed and tested on Python 3.12.3 under both Windows 10 and Windows 11. No installation procedure is required beyond installing standard Python 3 and the key dependencies. All scripts should remain compatible with standard Python 3 distributions on other operating systems.
+This codebase was developed and tested on Pythonâ€¯3.12.3 under both Windowsâ€¯10 and Windowsâ€¯11. No installation procedure is required beyond installing standard Pythonâ€¯3 and the key dependencies. All scripts should remain compatible with standard Pythonâ€¯3 distributions on other operating systems.
 
 ## License
 
@@ -190,3 +114,4 @@ We welcome discussions via GitHub to improve the model or address potential issu
 ## References
 
 Paci, G., Berkemeier, F., Baum, B., Page, K.M., & Mao, Y. 3D epithelial cell topology tunes signalling range to promote precise patterning. _bioRxiv_ (2025).
+
