@@ -48,13 +48,13 @@ The core implementation is in `src/msm_model.py`, and interactive analyses are i
 
 ### Quick setup
 
+Install the required packages:
+
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-### Run the notebook
+Open the notebook:
 
 ```powershell
 jupyter notebook notebooks/msm_notebook.ipynb
