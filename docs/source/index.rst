@@ -1,5 +1,5 @@
-﻿A Multi-layer Model of Notch-Delta Signalling Documentation
-============================================================
+Multi-layer Signalling Model for Notch-Delta Patterning Documentation
+======================================================================
 
 Welcome to the documentation for the Multi-layer Signalling Model (MSM) implementation.
 
@@ -9,9 +9,7 @@ Welcome to the documentation for the Multi-layer Signalling Model (MSM) implemen
 
    overview
    data_layout
-   notebook_workflow
-   msm_model_api
-   reproducibility
+   release_notes
 
 Indices and tables
 ==================
