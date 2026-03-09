@@ -62,19 +62,29 @@ jupyter notebook notebooks/msm_notebook.ipynb
 
 Provide data at repository root under `data/` using this structure:
 
-- `data/adjacency_matrices/adjacency_matrices_<wing_region>.xlsx`
-- `data/cell_geometry/cell_geometry_<wing_region>.csv`
-- `data/wing_region_metadata.csv`
+- Adjacency matrices: `data/adjacency_matrices/adjacency_matrices_<wing_region>.xlsx`
+: Layer-by-layer cell-cell adjacency matrices for one region (`<wing_region>`). Each sheet corresponds to one depth layer.
+- Cell geometry: `data/cell_geometry/cell_geometry_<wing_region>.csv`
+: Per-cell geometric information (at least frame, centroid coordinates, and area) used for distances, straightening, and plotting.
+- Wing disc metadata: `data/wing_region_metadata.csv`
+: Region-level configuration table used to build model dictionaries and parse signalling-competent cells.
 
 The metadata file should include at least:
 
 - `wing_region`
+: Region key used in filenames and throughout the notebook/model (for example `wd_1`).
 - `wing_label`
+: Human-readable label used in plot annotations.
 - `gap`
+: Vertical layer thickness (`?L`) used for integrating signalling weights across depth.
 - `n_layers`
+: Number of depth layers used for the region.
 - `default_height`
+: Default analysis band height used in SOP spacing calculations.
 - `is_wing_disc`
+: Boolean flag to mark canonical wing disc datasets (used for grouping/selection).
 - `signalling_labels` (list of cell indices, e.g. `"[1, 5, 9, 12]"`)
+: Cell indices considered signalling-competent in that region.
 
 ### Region selection
 
