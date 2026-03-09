@@ -187,7 +187,7 @@ def shade(color, factor):
 def fancy_plot(spacing_dict, Lmax_list, weight_type, wing_regions,
                saveQ=False, fig_size=(5,4), xlim=(0,25), ylim=(0.95, 2.35), smooth=0,
                degenplotQ=False, errorbarQ=False, colors = [shade("#1f77b4", 0.6),shade("#1f77b4", 1),shade("#1f77b4", 0.4)],
-               title='sop_spacing', x_title='Depth (Âµm)',
+               title='sop_spacing', x_title='Depth (µm)',
                legend_loc='lower right', meanQ=False, meancolor='black', mergeQ=False):
 
     plt.figure(figsize=fig_size)
