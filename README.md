@@ -1,6 +1,6 @@
 # A Multi-layer Model of Notch-Delta Signalling
 
-We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see Paci et al. (2025).
+We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see [Paci et al. (2025)](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1).
 
 ## Mathematical model
 
@@ -76,7 +76,7 @@ The metadata file should include at least:
 - `wing_label`
 : Human-readable label used in plot annotations.
 - `gap`
-: Vertical layer thickness (`?L`) used for integrating signalling weights across depth.
+: Vertical layer thickness used for integrating signalling weights across depth.
 - `n_layers`
 : Number of depth layers used for the region.
 - `default_height`
@@ -141,5 +141,5 @@ We welcome discussions via GitHub to improve the model or address potential issu
 
 ## References
 
-Paci, G., Berkemeier, F., Baum, B., Page, K.M., & Mao, Y. 3D epithelial cell topology tunes signalling range to promote precise patterning. _bioRxiv_ (2025).
+Paci, G., Berkemeier, F., Baum, B., Page, K.M., & Mao, Y. 3D epithelial cell topology tunes signalling range to promote precise patterning. _bioRxiv_ (2026). [doi.org/10.1101/2025.08.08.668674](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1)
 
