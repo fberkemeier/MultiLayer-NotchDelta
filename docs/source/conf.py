@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 import os
 import sys
 
@@ -18,7 +18,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns = [".ipynb_checkpoints", "**/.ipynb_checkpoints"]
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
@@ -28,3 +28,4 @@ html_theme_options = {
     "language_selector": False,
     "flyout_display": "hidden",
 }
+

@@ -26,8 +26,8 @@ Each ``adjacency_matrices_<wing_region>.xlsx`` file contains one sheet per depth
 Each sheet stores a square adjacency matrix:
 
 - rows and columns are cell indices (same ordering as model indices)
-- value ``1`` means the cell pair shares a contact in that layer
 - value ``0`` means no contact
+- value ``edge`` means the cell pair shares a contact in that layer, with shared edge length equal to ``edge``
 - diagonal entries should be ``0`` (no self-contact)
 
 The number of sheets should match ``n_layers`` in metadata for that region.
@@ -95,7 +95,7 @@ Required columns
      - Display label used in figures/legends
      - ``1``
    * - ``gap``
-     - Inter-layer spacing (``?L``)
+     - Inter-layer spacing
      - ``0.5``
    * - ``n_layers``
      - Number of depth layers used in simulation

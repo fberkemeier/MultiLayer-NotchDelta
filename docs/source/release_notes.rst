@@ -1,11 +1,10 @@
 Release Notes
 =============
 
-Unreleased
-----------
+v1.0.0
+------
 
-- Documentation reorganized around a concise top-level navigation.
-- Expanded data layout documentation with explicit file naming rules.
-- Added column-level examples for ``cell_geometry`` and ``wing_region_metadata``.
-- Clarified adjacency-matrix structure (sheet-per-layer, binary contact matrices).
-- Removed legacy pages that duplicated notebook/source internals.
+- First stable documentation release for MSM.
+- Added core docs pages: Overview, Quickstart, Data Layout, and Function Reference.
+- Documented the mathematical model, straightening model, notebook workflow, and expected outputs.
+
