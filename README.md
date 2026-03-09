@@ -48,6 +48,12 @@ The core implementation is in `src/msm_model.py`, and interactive analyses are i
 
 ### Quick setup
 
+Clone the repository:
+
+```powershell
+git clone https://github.com/fberkemeier/MultiLayer-NotchDelta.git
+```
+
 Install the required packages:
 
 ```powershell
