@@ -42,7 +42,7 @@ Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across s
 
 ## Usage
 
-The core implementation is in `src/msm_model.py`, and interactive analyses are in `notebooks/msm_notebook.ipynb`.
+The core implementation is in `src/msm_model.py`, and interactive analyses are in `notebooks/msm_notebook.ipynb`. Full documentation is available here.
 
 ### Quick setup
 
