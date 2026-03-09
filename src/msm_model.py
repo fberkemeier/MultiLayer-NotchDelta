@@ -10,6 +10,8 @@ import warnings
 import random
 import time
 import argparse
+import re
+from functools import lru_cache
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -119,10 +121,21 @@ def min_long_range_distance(M, centroids, labels):
     return dist_non_nb.min()
 
 # Layer weight computation
-def compute_omega_k(omega_func, wing_region, Lmax=None, method='simpson', num_simpson=101):
-    
-    gap = gap_dict[wing_region]
-    n   = n_dict[wing_region]
+def compute_omega_k(
+    omega_func,
+    wing_region,
+    Lmax=None,
+    method='simpson',
+    num_simpson=101,
+    gap=None,
+    n_layers=None,
+):
+
+    if gap is None:
+        gap = get_region_gap(wing_region)
+    if n_layers is None:
+        n_layers = get_region_n_layers(wing_region)
+    n = int(n_layers)
 
     def omega_cut(z):
         z = np.asarray(z)
@@ -162,24 +175,8 @@ def compute_omega_k(omega_func, wing_region, Lmax=None, method='simpson', num_si
         raise ValueError(f"Unknown method '{method}'")
 
 # Load centroid data
-def load_centroids(wing_region):
-    path = DATA_DIR / f"data_cell_geometry_{wing_region}.csv"
-    df = pd.read_csv(path)
-    max_frame = df["frame"].max()
-    centroid_lists = []
-    for frame in range(max_frame + 1):
-        subdf = df[df["frame"] == frame]
-        arr = subdf[["centroid_x", "centroid_y"]].to_numpy()
-        centroid_lists.append(arr)
-    return centroid_lists
 
 # Load apical area data
-def load_areas(wing_region):
-    path = DATA_DIR / f"data_cell_geometry_{wing_region}.csv"
-    df = pd.read_csv(path)
-    subdf = df[df["frame"] == 0]
-    area_list = subdf["area"].to_numpy()
-    return area_list
 
 # Color function
 def shade(color, factor):
@@ -470,74 +467,129 @@ def compute_band_distance(wing_region,
                           k=2, h=2, Ka=0.1, Kr=0.001, nu=1,
                           show_labels=True, show_other_layers=True,
                           randomQ=True,
+                          signalling_labels=None,
+                          adjacency_layers=None,
+                          centroid_layers=None,
                           **quad_kwargs):
-    
+
     if weight_list is None:
         if omega_func is None:
             raise ValueError("Either weight_list or omega_func must be provided")
-        if normalQ: # option to normalise the weights
-            weight_list_base = compute_omega_k(omega_func, wing_region, Lmax=Lmax, method=quad_method, **quad_kwargs)
-            weight_list_all = compute_omega_k(omega_func, wing_region, Lmax=32, method=quad_method, **quad_kwargs)
-            weight_list = np.array([i*sum(weight_list_base)/sum(weight_list_all) for i in weight_list_base])
+        if normalQ:
+            weight_list_base = compute_omega_k(
+                omega_func, wing_region, Lmax=Lmax, method=quad_method, **quad_kwargs
+            )
+            weight_list_all = compute_omega_k(
+                omega_func, wing_region, Lmax=32, method=quad_method, **quad_kwargs
+            )
+            weight_list = np.array([
+                i * sum(weight_list_base) / sum(weight_list_all)
+                for i in weight_list_base
+            ])
         else:
-            weight_list = compute_omega_k(omega_func, wing_region, Lmax=Lmax, method=quad_method, **quad_kwargs)
-    weight_list0 = weight_list
-    
+            weight_list = compute_omega_k(
+                omega_func, wing_region, Lmax=Lmax, method=quad_method, **quad_kwargs
+            )
+
+    if adjacency_layers is None:
+        adjacency_layers = get_adjacency_layers(wing_region)
+    else:
+        adjacency_layers = [np.asarray(a, dtype=float) for a in adjacency_layers]
+
+    if centroid_layers is None:
+        centroid_layers = get_centroids_layers(wing_region)
+    else:
+        centroid_layers = [np.asarray(c, dtype=float) for c in centroid_layers]
+
+    if signalling_labels is None:
+        labels = get_signalling_labels(wing_region)
+    else:
+        labels = np.asarray(signalling_labels, dtype=int)
+
     thresholds = [0.1, 0.2, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9]
     results = {th: [] for th in thresholds}
     results_v = {th: [] for th in thresholds}
-    
+
     if str_type == 'centroid':
-        A_list = straight_adjacency(A_dict, centroids_dict, alpha)[wing_region]
-    
-    cents   = np.array(centroids_dict[wing_region][0])
-    adj0    = A_dict[wing_region][0]
-    labels  = signalling_labels_dict[wing_region]
-    
+        A_list = straight_adjacency(
+            {wing_region: adjacency_layers},
+            {wing_region: centroid_layers},
+            alpha,
+        )[wing_region]
+    else:
+        A_list = adjacency_layers
+
+    cents = np.array(centroid_layers[0])
+    adj0 = adjacency_layers[0]
+
     sop_pairs = []
     bimodal_list = []
 
-    for sim in range(sim_number):
-        wk    = weight_list
+    for _ in range(sim_number):
+        wk = weight_list
+
         if str_type == 'prune':
-            straight_data = straight_prune(A_dict, centroids_dict, alpha)
+            if 'straight_prune' not in globals():
+                raise NameError(
+                    "str_type='prune' requires a straight_prune(...) helper, "
+                    "which is not defined in msm_model_test.py"
+                )
+            straight_data = straight_prune(
+                {wing_region: adjacency_layers},
+                {wing_region: centroid_layers},
+                alpha,
+            )
             A_list, prune_idx = straight_data[0][wing_region], straight_data[1][wing_region]
-            wk_new = [0 if i in prune_idx else val for i,val in enumerate(wk)]
+            wk_new = [0 if i in prune_idx else val for i, val in enumerate(wk)]
             wk_new = [v * sum(wk) / sum(wk_new) for v in wk_new]
             wk = wk_new
 
         if epsmodelQ:
-            dist_min = min_long_range_distance(A_dict[wing_region][0], centroids_dict[wing_region][0], signalling_labels_dict[wing_region])
-            M = long_range_M(A_dict[wing_region][0], centroids_dict[wing_region][0], (1+prot_len)*(dist_min-1e-6), eps, signalling_labels_dict[wing_region])
+            dist_min = min_long_range_distance(adjacency_layers[0], centroid_layers[0], labels)
+            M = long_range_M(
+                adjacency_layers[0],
+                centroid_layers[0],
+                (1 + prot_len) * (dist_min - 1e-6),
+                eps,
+                labels,
+            )
         else:
-            M = sum(w*A for w,A in zip(wk, A_list))
-            
-        notch, delta = simulate(M, t_final, dt, labels, k=k, h=h, Ka=Ka, Kr=Kr, nu=nu, randomQ=randomQ)
+            M = sum(w * A for w, A in zip(wk, A_list))
 
-        bimodal_list.append(SOP_bimodality(delta[signalling_labels_dict[wing_region]], notch[signalling_labels_dict[wing_region]]))
-        
+        notch, delta = simulate(
+            M, t_final, dt, labels, k=k, h=h, Ka=Ka, Kr=Kr, nu=nu, randomQ=randomQ
+        )
+
+        bimodal_list.append(SOP_bimodality(delta[labels], notch[labels]))
+
         for th in thresholds:
-            sop_idx = np.where(delta>th)[0]
+            sop_idx = np.where(delta > th)[0]
             d, v = band_avg_min_sop_distance(cents, sop_idx, adj0, height, y_shift_steps)
             results[th].append(d)
             results_v[th].append(v)
 
         if plotQ:
-            if marker_type == 'notch':
-                marker = notch
-            elif marker_type == 'delta':
-                marker = delta
-            plot_layer_graph(marker, centroids_dict[wing_region], A_dict[wing_region], wing_region=wing_region, framenumber=0, saveQ=graphsaveQ,
-                             show_labels=show_labels, show_other_layers=show_other_layers)
-            
+            marker = notch if marker_type == 'notch' else delta
+            plot_layer_graph(
+                marker,
+                centroid_layers,
+                adjacency_layers,
+                wing_region=wing_region,
+                framenumber=0,
+                saveQ=graphsaveQ,
+                show_labels=show_labels,
+                show_other_layers=show_other_layers,
+            )
+
         sop_pairs.append(np.triu(adj0[np.ix_(sop_idx, sop_idx)] > 0, k=1).sum())
-    
+
     avg_results = {}
     for th, ds in results.items():
         finite = [x for x in ds if np.isfinite(x)]
         avg_results[th] = np.mean(finite) if finite else np.inf
-        if th==0.1:
-            ds0=ds
+        if th == 0.1:
+            ds0 = ds
+
     avg_results_v = {}
     for th, ds in results_v.items():
         finite = [x for x in ds if np.isfinite(x)]
@@ -649,7 +701,7 @@ def plot_straightening_nonapical(A_str_dict, region, alphas, saveQ=False):
     )
     ax.grid(True, linestyle='--', alpha=0.3)
     ax.set_position([0.10, 0.15, 0.85, 0.75])
-    plt.title(f'WD {wd_dict[region]}')
+    plt.title(f'WD {get_region_label(region)}')
     if saveQ:
         plt.savefig(FIGURES_DIR / f'straight_neighbour_{region}.pdf', bbox_inches='tight', transparent=True)
     plt.show()
@@ -657,95 +709,6 @@ def plot_straightening_nonapical(A_str_dict, region, alphas, saveQ=False):
     return deg_nonap_list
 
 # Sensitivity analysis functions
-def best_fit(L, best_array=[1., 2., 2., 1.]):
-    nums, bools = L
-    return float('inf') if any(bools) else np.linalg.norm(np.array(nums) - np.array(best_array))
-def plot_heatmap(
-    data,
-    wd_label='wd_1',
-    allQ=False,
-    h_range=None,
-    nu_range=None,
-    logQ=False,
-    show_label=False,
-    figsize_auto=True,
-    tick_step=None,
-    saveQ=False,
-    filename=None,
-    tick_fontsize=12,
-    title_name=''
-):
-
-    if allQ:
-        hs_all  = sorted({h for w, h, n in data})
-        nus_all = sorted({n for w, h, n in data})
-        title = "all wing discs"
-    else:
-        hs_all  = sorted({h for w, h, n in data if w == wd_label})
-        nus_all = sorted({n for w, h, n in data if w == wd_label})
-        title = wd_label
-
-    hs  = [h for h in hs_all  if h_range  is None or (h_range[0] <= h <= h_range[1])]
-    nus = [n for n in nus_all if nu_range is None or (nu_range[0] <= n <= nu_range[1])]
-
-    if allQ:
-        M = np.empty((len(hs), len(nus)))
-        M[:] = np.nan
-        for i, h in enumerate(hs):
-            for j, nu in enumerate(nus):
-                vals = [data.get((w, h, nu), np.nan) for w in wing_discs]
-                vals = np.array(vals, float)
-                vals = vals[np.isfinite(vals)]
-                M[i, j] = np.nan if vals.size == 0 else np.mean(vals)
-    else:
-        M = np.array([[data.get((wd_label, h, nu), np.nan) for nu in nus] for h in hs])
-
-    M = np.ma.masked_where(~np.isfinite(M), M)
-    cmap = plt.cm.viridis.copy()
-    cmap.set_bad(color='white')
-
-    if figsize_auto:
-        w = max(4, len(nus) * 0.6)
-        h_size = max(4, len(hs) * 0.6)
-        plt.figure(figsize=(w, h_size))
-    else:
-        plt.figure()
-
-    finite_vals = M.compressed()
-    if logQ and np.any(finite_vals > 0):
-        pos_vals = finite_vals[finite_vals > 0]
-        norm = LogNorm(vmin=pos_vals.min(), vmax=pos_vals.max())
-        im = plt.imshow(M, origin='upper', cmap=cmap, norm=norm)
-    else:
-        im = plt.imshow(M, origin='upper', cmap=cmap)
-
-    def choose_tick_positions(n):
-        if tick_step is not None:
-            return list(range(0, n, tick_step))
-        step = max(1, int(np.ceil(n / 10)))
-        return list(range(0, n, step))
-
-    xticks = choose_tick_positions(len(nus))
-    yticks = choose_tick_positions(len(hs))
-    plt.xticks(xticks, [f"{nus[i]:.2g}" for i in xticks], fontsize=tick_fontsize)
-    plt.yticks(yticks, [f"{hs[i]:.2g}" for i in yticks], fontsize=tick_fontsize)
-    plt.xlabel(r'$\nu$', fontsize=tick_fontsize)
-    plt.ylabel(r'$h$', fontsize=tick_fontsize)
-    plt.title(title, fontsize=tick_fontsize + 2)
-    if show_label:
-        for i in range(len(hs)):
-            for j in range(len(nus)):
-                if np.isfinite(M[i, j]):
-                    plt.text(j, i, f'{M[i,j]:.2f}', ha='center', va='center', fontsize=tick_fontsize - 1)
-    cbar = plt.colorbar(im)
-    cbar.ax.tick_params(labelsize=tick_fontsize)
-    plt.tight_layout()
-
-    if saveQ:
-        if filename is None:
-            filename = title.replace(" ", "_") + ".pdf"
-        plt.savefig(FIGURES_DIR / f"{title_name}_{filename}", transparent=True, bbox_inches='tight')
-    plt.show()
     
 def SOP_bimodality(delta, notch):
     corr_score = -np.corrcoef(delta, notch)[0,1]
@@ -754,223 +717,12 @@ def SOP_bimodality(delta, notch):
     xor_score = np.mean(delta_bin ^ notch_bin)
     return corr_score
     
-def _fmt_eta(seconds):
-    seconds = max(0, int(round(seconds)))
-    return f"{seconds//60:02d}:{seconds%60:02d}"
 
-def longrun(Kr, h_list = np.arange(2, 8.1, 1), nu_list = [10**i for i in np.arange(-1., 0.1, 0.2)], sim_number = 50, threshold=0.1, k=2, Ka=0.1, dt=0.1):
-    
-    Lmax_list = np.linspace(0.5, 25, 2)
-    alpha_list = np.linspace(0., 1., 2)
-    degen_T = 1.
-    normalQ = False    
-    heatmap_dict = {}
-    heatmap_dict_bimodal = {}
-    start_time = time.time()
-    total_iters = len(h_list) * len(nu_list)
-    completed = 0
-    
-    for h_i in h_list:
-        for nu_i in nu_list:
-            spacing_dict_exp = {region: [] for region in wing_regions}
-            bimodal_dict_exp = {region: [] for region in wing_regions}
-            it = 0
-            for Lmax in Lmax_list:
-                for region in wing_regions:
-                    d, vr, degenQ, avg_bimodal = compute_band_distance(
-                        region,
-                        omega_func=omega_exp,
-                        Lmax=Lmax,
-                        sim_number=sim_number,
-                        quad_method='simpson',
-                        height=heights_dict[region],
-                        degen_T=degen_T,
-                        normalQ=normalQ,
-                        t_final=t_final,
-                        y_shift_steps=20,
-                        k=k, h=h_i, Ka=Ka, Kr=Kr, nu=nu_i, dt=dt
-                    )
-                    d = d[threshold]
-                    vr = vr[threshold]
-                    spacing_dict_exp[region].append([d, vr, degenQ])
-                    bimodal_dict_exp[region].append(avg_bimodal)
-                    it += 1
-                    print(f'{it}/{len(Lmax_list)*len(wing_regions)}')#, end='\r')
 
-            spacing_dict_exp_straight = {region: [] for region in wing_regions}
-            bimodal_dict_exp_straight = {region: [] for region in wing_regions}
-            it = 0
-            for alpha in alpha_list:
-                for region in wing_regions:
-                    d, vr, degenQ, avg_bimodal = compute_band_distance(
-                        region,
-                        omega_func=omega_exp,
-                        Lmax=25,
-                        alpha=alpha,
-                        sim_number=sim_number,
-                        quad_method='simpson',
-                        height=heights_dict[region],
-                        degen_T=degen_T,
-                        normalQ=normalQ,
-                        t_final=t_final,
-                        y_shift_steps=20,
-                        str_type='centroid',
-                        k=k, h=h_i, Ka=Ka, Kr=Kr, nu=nu_i, dt=dt
-                    )
-                    d = d[threshold]
-                    vr = vr[threshold]
-                    spacing_dict_exp_straight[region].append([d, vr, degenQ])
-                    bimodal_dict_exp_straight[region].append(avg_bimodal)
-                    it += 1
-                    print(f'{it}/{len(alpha_list)*len(wing_regions)}')#, end='\r')
 
-            for region in wing_regions:
-                ll_dist = [[spacing_dict_exp[region][0][0],spacing_dict_exp[region][1][0],spacing_dict_exp_straight[region][0][0],spacing_dict_exp_straight[region][1][0]]]
-                ll_bool = [[spacing_dict_exp[region][0][2],spacing_dict_exp[region][1][2],spacing_dict_exp_straight[region][0][2],spacing_dict_exp_straight[region][1][2]]]
-                ll_all = ll_dist+ll_bool
-                heatmap_dict[(region, h_i, nu_i)] = ll_all
-                
-                heatmap_dict_bimodal[(region, h_i, nu_i)] = [bimodal_dict_exp[region], bimodal_dict_exp_straight[region]]
-    
-            completed += 1
-            elapsed = time.time() - start_time
-            avg_time = elapsed / completed
-            remaining = avg_time * (total_iters - completed)
-            print(f"Running simulations for h={h_i}, nu={nu_i} "
-                  f"({completed}/{total_iters}, "
-                  f"elapsed {elapsed/60:.1f} min, "
-                  f"~{remaining/60:.1f} min remaining)")
-    
-            print(f" â†’ Finished h={h_i}, nu={nu_i}\n")#, end='\r')
-    
-    total_time = (time.time() - start_time) / 60
-    print(f"Total estimated runtime: {total_time:.1f} minutes")
 
-    return heatmap_dict, heatmap_dict_bimodal
-
-def runsens(Kr=10**-3, h_list=np.arange(2, 8.1, 1), nu_list = np.arange(0.075, 0.11, 0.0025), threshold=0.1, sim_number=2, reso='SMALL', sname='', bimodQ=False,
-            k=2, Ka=0.1, dt=0.1):
-    
-    ttname1 = f'heatmap_spacing_{reso}_{sname}'
-    ttname2 = f'heatmap_bimodal_{reso}_{sname}'
-    heatmap_dict, heatmap_dict_bimodal = longrun(Kr, h_list=h_list, nu_list=nu_list, sim_number=sim_number, threshold=threshold, k=k, Ka=Ka, dt=dt)
-    heatmap_error_dict = {i: best_fit(j) for i, j in heatmap_dict.items()}
-    plot_heatmap(
-        heatmap_error_dict,
-        allQ=True,
-        h_range=(2, 10),
-        nu_range=(min(nu_list), 1000),
-        logQ=False,
-        tick_fontsize=10,
-        saveQ=True,
-        title_name=ttname1
-    )
-
-    d_to_save = {str(k): v for k, v in heatmap_error_dict.items()}
-    with open(SENSITIVITY_DIR / f"{ttname1}.txt", "w", encoding="utf-8") as f:
-        json.dump(d_to_save, f, indent=2)
-    
-    if bimodQ:
-    
-        heatmap_error_dict_bimodal = {}
-        for key, val in heatmap_dict_bimodal.items():
-            dist = np.linalg.norm(np.array([val[0][1], val[1][0]]) - 1)
-            heatmap_error_dict_bimodal[key] = dist
-        plot_heatmap(
-            heatmap_error_dict_bimodal,
-            allQ=True,
-            h_range=(2, 10),
-            nu_range=(0.05, 1000),
-            logQ=False,
-            tick_fontsize=10,
-            saveQ=True,
-            title_name=ttname2
-        )
-    
-        d_to_save2 = {str(k): v for k, v in heatmap_error_dict_bimodal.items()}
-        with open(SENSITIVITY_DIR / f"{ttname2}.txt", "w", encoding="utf-8") as f:
-            json.dump(d_to_save2, f, indent=2)
-
-def parse_key(k_str: str):
-
-    try:
-        return ast.literal_eval(k_str)
-    except Exception:
-        s = k_str.strip()
-        s = re.sub(r"\barray\(\s*([^)]+?)\s*\)", r"\1", s)
-        s = re.sub(r"\bnp\.float64\(\s*([^)]+?)\s*\)", r"\1", s)
-        s = re.sub(r"\bfloat\(\s*([^)]+?)\s*\)", r"\1", s)
-        s = re.sub(r"\bDecimal\(\s*([^)]+?)\s*\)", r"\1", s)
-        return ast.literal_eval(s)
-
-def plothm(path, cbar_range=None, title=None, debug_bad_keys=True, stitle='plot', saveQ=False):
-    path = Path(path)
-    if not path.is_absolute():
-        candidate = REPO_ROOT / path
-        if candidate.exists():
-            path = candidate
-    with path.open("r", encoding="utf-8") as f:
-        d = json.loads(f.read())
-    vals = defaultdict(list)
-    for k_str, v in d.items():
-        try:
-            wd, k2, k3 = parse_key(k_str)
-        except Exception:
-            if debug_bad_keys:
-                print("BAD KEY (could not parse):", k_str)
-            raise
-        vals[(float(k2), float(k3))].append(float(v))
-    rows = [
-        {"k2": k2, "k3": k3, "mean": float(np.mean(vs)), "n": len(vs)}
-        for (k2, k3), vs in vals.items()
-    ]
-    df = pd.DataFrame(rows)
-    bad = df[df["n"] != 3]
-    if len(bad):
-        print("Warning: some (k2,k3) pairs are missing wd entries:")
-        print(bad.sort_values(["k2", "k3"]).to_string(index=False))
-    k2_sorted = np.sort(df["k2"].unique())
-    k3_sorted = np.sort(df["k3"].unique())
-    grid = np.full((len(k2_sorted), len(k3_sorted)), np.nan, float)
-    k2_to_i = {k2: i for i, k2 in enumerate(k2_sorted)}
-    k3_to_j = {k3: j for j, k3 in enumerate(k3_sorted)}
-    for _, r in df.iterrows():
-        grid[k2_to_i[r["k2"]], k3_to_j[r["k3"]]] = r["mean"]
-    plt.figure(figsize=(10, 5))
-    imshow_kwargs = dict(origin="lower", aspect="auto")
-    if cbar_range is not None:
-        vmin, vmax = cbar_range
-        imshow_kwargs.update(vmin=vmin, vmax=vmax)
-    im = plt.imshow(grid, **imshow_kwargs)
-    plt.colorbar(im, label="Mean value over wd_1-wd_3")
-    plt.xticks(
-        np.arange(len(k3_sorted)),
-        [f"{x:.4g}" for x in k3_sorted],
-        rotation=45,
-        ha="right",
-    )
-    plt.yticks(
-        np.arange(len(k2_sorted)),
-        [f"{y:.4g}" for y in k2_sorted],
-    )
-    plt.xlabel("Third key (k3)")
-    plt.ylabel("Second key (k2)")
-    plt.title(title if title is not None else "Heatmap: mean over wd_1-wd_3")
-    plt.tight_layout()
-    if saveQ:
-        plt.savefig(FIGURES_DIR / f'sens_{stitle}.pdf', bbox_inches='tight', transparent=True)
-    plt.show()
 
 # Distance heights
-def compute_avg_count(cents, h1, n_shifts=20):
-    y = cents[:, 1]
-    y_min, y_max = y.min(), y.max()
-    counts = []
-    for s in np.linspace(0, 1, n_shifts):
-        y0 = y_min + s * ((y_max - h1) - y_min)
-        inside = (y >= y0) & (y <= y0 + h1)
-        counts.append(inside.sum())
-    return np.mean(counts)
 
 
 
@@ -983,111 +735,337 @@ nu = 1.
 t_final = 1000.
 dt = 0.1
 
-# Regionâ€specific parameters
-wing_regions = ['wd_1', 'wd_2', 'wd_3', 'wd_2_mbs', 'wd_3_mbs', 'wd_8_mbs']
-wing_discs = ["wd_1", "wd_2", "wd_3"]
-wd_dict = {'wd_1': '1', 'wd_2': '2', 'wd_3': '3', 'wd_2_mbs': '2mbs', 'wd_3_mbs': '3mbs', 'wd_8_mbs': '8mbs'}
-gap_dict = {'wd_1': 0.5, 'wd_2': 0.3, 'wd_3': 0.5, 'wd_2_mbs': 0.3, 'wd_3_mbs': 0.3, 'wd_8_mbs': 0.3}
-n_dict = {'wd_1': 50, 'wd_2': 105, 'wd_3': 60, 'wd_2_mbs': 80, 'wd_3_mbs': 80, 'wd_8_mbs': 91}
-signalling_labels_dict = {
-    'wd_1': np.array([23,25,26,27,28,29,34,36,37,41,44,45,47,48,51,52,54,55,
-                              56,57,58,60,63,64,65,67,68,69,71,73,74,76,79,80,82,
-                              83,84,86,88,89,91,92,93,95,96,97,98,99,103,106,121,
-                              124,125,130,139], dtype=int),
-    'wd_2': np.array([5,8,12,13,14,16,17,18,19,20,21,22,28,29,30,33,34,37,
-                              38,39,40,41,42,43,46,48,49,51,52], dtype=int),
-    'wd_3': np.array([20,22,27,28,29,30,31,34,35,36,37,38,39,42,43,45,48,49,
-                              51,52,53,54,55,56,57,58,59,60,62,64,65,66,67,68,69,
-                              70,72,73,76,77,78,94,96,101], dtype=int),
-    'wd_2_mbs': np.array([1, 5, 6, 7, 8, 9, 10, 13, 14, 17, 21, 22, 23, 24, 25, 27,
-                          29, 30, 31, 32, 35, 37, 41, 45, 48, 49, 50, 51, 60, 71, 72,
-                          78, 79, 99], dtype=int),
-    'wd_3_mbs': np.array([0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 13, 17, 18, 19, 20, 23, 25,
-                          26, 27, 28, 30, 31, 32, 33, 34, 36, 44, 45, 53, 58, 60, 61,
-                          68, 69, 71, 72, 78, 83, 87, 93, 94], dtype=int),           ############## +100?????
-    'wd_8_mbs': np.array([5, 13, 15, 16, 17, 18, 21, 29, 30, 31, 32, 34, 37, 38, 39, 41,
-                          42, 43, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 62,
-                          64, 65, 68, 73, 74, 75, 76, 85, 98, 99, 125], dtype=int)
-}
+# Region-specific parameters are externalized to data files.
+# This makes the model reusable for arbitrary datasets.
 
-# Notch intensity data
-notch_data = np.array([
-    78.882, 70.702, 62.452, 55.169, 49.589, 44.339, 40.863, 38.124,
-    35.518, 33.322, 31.955, 31.507, 30.938, 30.339, 29.484, 29.244,
-    29.084, 28.970, 28.560, 28.366, 28.093, 28.167, 27.262, 26.740,
-    26.212, 26.267, 27.035, 26.509, 26.545, 25.619, 26.036, 26.059,
-    25.479, 25.472, 25.191, 25.506, 24.864, 24.734, 24.919, 25.314,
-    26.016, 25.677, 25.618, 25.282, 25.482, 25.690, 25.258, 25.165,
-    25.084, 25.022, 25.243, 25.178, 25.359, 25.294, 25.470, 25.763,
-    25.659, 25.891, 25.820, 25.924, 26.172, 26.732, 26.190, 26.571
-])
+_REGION_METADATA_PATH = DATA_DIR / "wing_region_metadata.csv"
+SIGNALLING_LABELS_DIR = DATA_DIR / "signalling_labels"  # legacy fallback only
 
-# Data loading
-height_list = [85., 170., 105., 105.9, 89., 81.5]
-heights_dict = dict(zip(wing_regions, height_list))
 
-# Dictionary creation
-path_dict = {
-    r: DATA_DIR / f'adjacency_matrices_{r}.xlsx'
-    for r in wing_regions
-}
-sheets_dict = {
-    r: pd.read_excel(path_dict[r], sheet_name=None, header=None)
-    for r in wing_regions
-}
-A_dict = {
-    r: [sheet.values.astype(float) for sheet in sheets_dict[r].values()]
-    for r in wing_regions
-}
-centroids_dict = {
-    r: load_centroids(r)
-    for r in wing_regions
-}
-area_apical_dict = {
-    r: load_areas(r)
-    for r in wing_regions
-}
-diam_apical_dict = {
-    r: 2 * np.sqrt(area_apical_dict[r] / np.pi)
-    for r in wing_regions
-}
-signalling_labels_apical_dict = {
-    region: [i for i in labels if A_dict[region][0][i].sum() > 0]
-    for region, labels in signalling_labels_dict.items()
-}
-apical_neighbours_dict = {
-    region: {
-        i: [j for j in labels if A_dict[region][0][i, j] > 0]
-        for i in labels
-    }
-    for region, labels in signalling_labels_dict.items()
-}
-nonapical_neighbours_dict = {
-    region: {
-        i: [j for j in labels if A_dict[region][0][i, j] == 0]
-        for i in labels
-    }
-    for region, labels in signalling_labels_dict.items()
-}
+def _coerce_region(name):
+    return str(name).strip()
 
-# Folder creation
+
+def _parse_signalling_labels_cell(value):
+    if value is None:
+        return np.array([], dtype=int)
+    s = str(value).strip()
+    if not s or s.lower() == 'nan':
+        return np.array([], dtype=int)
+    if s.startswith('[') and s.endswith(']'):
+        vals = json.loads(s)
+        return np.asarray(vals, dtype=int)
+    parts = [p for p in re.split(r'[;,\s]+', s) if p]
+    return np.asarray([int(p) for p in parts], dtype=int)
+
+
+@lru_cache(maxsize=1)
+def _load_region_metadata_table():
+    if _REGION_METADATA_PATH.exists():
+        df = pd.read_csv(_REGION_METADATA_PATH)
+        if "wing_region" not in df.columns:
+            raise ValueError("wing_region_metadata.csv must include a 'wing_region' column")
+        df["wing_region"] = df["wing_region"].astype(str)
+        return df.set_index("wing_region", drop=False)
+    cols = ["wing_region", "wing_label", "gap", "n_layers", "default_height", "is_wing_disc"]
+    return pd.DataFrame(columns=cols).set_index("wing_region", drop=False)
+
+
+def list_wing_regions():
+    names = set()
+    for p in (DATA_DIR / "adjacency_matrices").glob("adjacency_matrices_*.xlsx"):
+        names.add(p.stem.replace("adjacency_matrices_", ""))
+    for p in (DATA_DIR / "cell_geometry").glob("cell_geometry_*.csv"):
+        names.add(p.stem.replace("cell_geometry_", ""))
+    if not names:
+        names = set(_load_region_metadata_table().index.tolist())
+    return sorted(names)
+
+
+def list_wing_discs(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    meta = _load_region_metadata_table()
+    out = []
+    for region in wing_regions:
+        region = _coerce_region(region)
+        if region in meta.index and "is_wing_disc" in meta.columns:
+            flag = meta.loc[region, "is_wing_disc"]
+            if str(flag).strip().lower() in {"1", "true", "yes"}:
+                out.append(region)
+        elif region.startswith("wd_") and "mbs" not in region:
+            out.append(region)
+    return out
+
+
+def get_region_metadata(wing_region):
+    wing_region = _coerce_region(wing_region)
+    meta = _load_region_metadata_table()
+    if wing_region not in meta.index:
+        raise KeyError(
+            f"Region '{wing_region}' missing from metadata. "
+            f"Add it to {_REGION_METADATA_PATH}."
+        )
+    row = meta.loc[wing_region]
+    return row.to_dict()
+
+
+def get_region_gap(wing_region):
+    row = get_region_metadata(wing_region)
+    if pd.isna(row.get("gap")):
+        raise ValueError(f"Missing gap for region '{wing_region}'")
+    return float(row["gap"])
+
+
+def get_region_n_layers(wing_region):
+    row = get_region_metadata(wing_region)
+    if not pd.isna(row.get("n_layers")):
+        return int(row["n_layers"])
+    return len(get_adjacency_layers(wing_region))
+
+
+def get_region_height(wing_region):
+    row = get_region_metadata(wing_region)
+    if not pd.isna(row.get("default_height")):
+        return float(row["default_height"])
+    diam = get_diam_apical(wing_region)
+    return float(height_set(diam, hs=0.04))
+
+
+def get_region_label(wing_region):
+    row = get_region_metadata(wing_region)
+    label = row.get("wing_label")
+    return wing_region if pd.isna(label) else str(label)
+
+
+def build_gap_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_region_gap(r) for r in wing_regions}
+
+
+def build_n_layers_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_region_n_layers(r) for r in wing_regions}
+
+
+def build_default_height_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_region_height(r) for r in wing_regions}
+
+
+def build_wd_label_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_region_label(r) for r in wing_regions}
+
+
+@lru_cache(maxsize=None)
+def _get_adjacency_layers_cached(wing_region):
+    wing_region = _coerce_region(wing_region)
+    path = DATA_DIR / "adjacency_matrices" / f"adjacency_matrices_{wing_region}.xlsx"
+    sheets = pd.read_excel(path, sheet_name=None, header=None)
+    return tuple(sheet.values.astype(float) for sheet in sheets.values())
+
+
+def get_adjacency_layers(wing_region):
+    return [arr.copy() for arr in _get_adjacency_layers_cached(_coerce_region(wing_region))]
+
+
+def build_adjacency_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_adjacency_layers(r) for r in wing_regions}
+
+
+@lru_cache(maxsize=None)
+def _get_centroids_layers_cached(wing_region):
+    wing_region = _coerce_region(wing_region)
+    path = DATA_DIR / "cell_geometry" / f"cell_geometry_{wing_region}.csv"
+    df = pd.read_csv(path)
+    max_frame = int(df["frame"].max())
+    out = []
+    for frame in range(max_frame + 1):
+        subdf = df[df["frame"] == frame]
+        out.append(subdf[["centroid_x", "centroid_y"]].to_numpy(dtype=float))
+    return tuple(out)
+
+
+def get_centroids_layers(wing_region):
+    return [arr.copy() for arr in _get_centroids_layers_cached(_coerce_region(wing_region))]
+
+
+def build_centroids_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_centroids_layers(r) for r in wing_regions}
+
+
+@lru_cache(maxsize=None)
+def _get_area_apical_cached(wing_region):
+    wing_region = _coerce_region(wing_region)
+    path = DATA_DIR / "cell_geometry" / f"cell_geometry_{wing_region}.csv"
+    df = pd.read_csv(path)
+    subdf = df[df["frame"] == 0]
+    return subdf["area"].to_numpy(dtype=float)
+
+
+def get_area_apical(wing_region):
+    return _get_area_apical_cached(_coerce_region(wing_region)).copy()
+
+
+def build_area_apical_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_area_apical(r) for r in wing_regions}
+
+
+def get_diam_apical(wing_region):
+    area = get_area_apical(wing_region)
+    return 2 * np.sqrt(area / np.pi)
+
+
+def build_diam_apical_dict(wing_regions=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    return {r: get_diam_apical(r) for r in wing_regions}
+
+
+def get_signalling_labels(wing_region, labels_dir=SIGNALLING_LABELS_DIR):
+    wing_region = _coerce_region(wing_region)
+
+    # Primary source: signalling_labels column in wing_region_metadata.csv
+    meta = _load_region_metadata_table()
+    if wing_region in meta.index and "signalling_labels" in meta.columns:
+        parsed = _parse_signalling_labels_cell(meta.loc[wing_region, "signalling_labels"])
+        if parsed.size > 0:
+            return parsed
+
+    # Legacy fallback: data/signalling_labels/<wing_region>.json
+    path = labels_dir / f"{wing_region}.json"
+    if path.exists():
+        vals = json.loads(path.read_text(encoding="utf-8"))
+        return np.asarray(vals, dtype=int)
+
+    raise FileNotFoundError(
+        f"No signalling labels found for '{wing_region}'. "
+        "Expected wing_region_metadata.csv column 'signalling_labels' or a legacy JSON file."
+    )
+
+
+def load_signalling_labels_dict(wing_regions=None, labels_dir=SIGNALLING_LABELS_DIR):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    out = {}
+    for r in wing_regions:
+        out[r] = get_signalling_labels(r, labels_dir=labels_dir)
+    return out
+
+
+
+
+def get_signalling_labels_apical(wing_region, signalling_labels=None, adjacency_layers=None):
+    if signalling_labels is None:
+        signalling_labels = get_signalling_labels(wing_region)
+    if adjacency_layers is None:
+        adjacency_layers = get_adjacency_layers(wing_region)
+    adj0 = adjacency_layers[0]
+    return [int(i) for i in signalling_labels if adj0[int(i)].sum() > 0]
+
+
+def get_apical_neighbours(wing_region, signalling_labels=None, adjacency_layers=None):
+    if signalling_labels is None:
+        signalling_labels = get_signalling_labels(wing_region)
+    if adjacency_layers is None:
+        adjacency_layers = get_adjacency_layers(wing_region)
+    adj0 = adjacency_layers[0]
+    out = {}
+    for i in signalling_labels:
+        i = int(i)
+        out[i] = [int(j) for j in signalling_labels if adj0[i, int(j)] > 0]
+    return out
+
+
+def get_nonapical_neighbours(wing_region, signalling_labels=None, adjacency_layers=None):
+    if signalling_labels is None:
+        signalling_labels = get_signalling_labels(wing_region)
+    if adjacency_layers is None:
+        adjacency_layers = get_adjacency_layers(wing_region)
+    adj0 = adjacency_layers[0]
+    out = {}
+    for i in signalling_labels:
+        i = int(i)
+        out[i] = [int(j) for j in signalling_labels if adj0[i, int(j)] == 0]
+    return out
+
+
+def build_signalling_labels_apical_dict(wing_regions=None, signalling_labels_dict=None, adjacency_dict=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    if signalling_labels_dict is None:
+        signalling_labels_dict = load_signalling_labels_dict(wing_regions)
+    out = {}
+    for r in wing_regions:
+        adj_layers = adjacency_dict[r] if adjacency_dict and r in adjacency_dict else None
+        out[r] = get_signalling_labels_apical(r, signalling_labels=signalling_labels_dict[r], adjacency_layers=adj_layers)
+    return out
+
+
+def build_apical_neighbours_dict(wing_regions=None, signalling_labels_dict=None, adjacency_dict=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    if signalling_labels_dict is None:
+        signalling_labels_dict = load_signalling_labels_dict(wing_regions)
+    out = {}
+    for r in wing_regions:
+        adj_layers = adjacency_dict[r] if adjacency_dict and r in adjacency_dict else None
+        out[r] = get_apical_neighbours(r, signalling_labels=signalling_labels_dict[r], adjacency_layers=adj_layers)
+    return out
+
+
+def build_nonapical_neighbours_dict(wing_regions=None, signalling_labels_dict=None, adjacency_dict=None):
+    if wing_regions is None:
+        wing_regions = list_wing_regions()
+    if signalling_labels_dict is None:
+        signalling_labels_dict = load_signalling_labels_dict(wing_regions)
+    out = {}
+    for r in wing_regions:
+        adj_layers = adjacency_dict[r] if adjacency_dict and r in adjacency_dict else None
+        out[r] = get_nonapical_neighbours(r, signalling_labels=signalling_labels_dict[r], adjacency_layers=adj_layers)
+    return out
+
+
+# Signalling functions
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
-# Signalling function and heights
+
 def omega_exp(z):
     return np.exp(-0.4 * z) + 0.5
+
+
 def omega_cnt(z):
     return 1.5
+
+
 def omega_lin(z):
-    return -1.5/25 * z + 1.5
+    return -1.5 / 25 * z + 1.5
+
+
 def omega_exp0(z):
     return np.exp(-0.1 * z) + 0.5
+
+
 omega_map = {
-    "exp":  omega_exp,
-    "cnt":  omega_cnt,
-    "lin":  omega_lin,
+    "exp": omega_exp,
+    "cnt": omega_cnt,
+    "lin": omega_lin,
     "exp0": omega_exp0,
 }
-def height_set(diam_list, hs=0.04):
-    return np.mean(diam_list[diam_list != 0]) * hs
 
+
+def height_set(diam_list, hs=0.04):
+    diam_list = np.asarray(diam_list, dtype=float)
+    valid = diam_list[diam_list != 0]
+    return np.mean(valid) * hs

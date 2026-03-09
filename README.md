@@ -1,6 +1,6 @@
-﻿# A Multi-layer Model of Notch-Delta Signalling
+# A Multi-layer Model of Notch-Delta Signalling
 
-We present a computational toolkit for simulating and analysing Notchâ€“Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cellâ€“cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see Paci et al. (2025).
+We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see Paci et al. (2025).
 
 ## Mathematical model
 
@@ -37,12 +37,12 @@ for a total number of signalling layers $n$ (layer range), where, at each layer 
 </p>
 
 <p align="center"><em>
-Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cellâ€“cell interactions. Adapted from Paci et al. (2025).
+Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell-cell interactions. Adapted from Paci et al. (2025).
 </em></p>
 
 ## Usage
 
-The core implementation is in `src/msm_model.py`, and the interactive workflows are provided in `notebooks/msm_notebook.ipynb`.
+The core implementation is in `src/msm_model.py`, and interactive analyses are in `notebooks/msm_notebook.ipynb`.
 
 ### Quick setup
 
@@ -58,45 +58,63 @@ pip install -r requirements.txt
 jupyter notebook notebooks/msm_notebook.ipynb
 ```
 
-The first notebook cell is configured to import from `src/`:
+### Data layout
+
+Provide data at repository root under `data/` using this structure:
+
+- `data/adjacency_matrices/adjacency_matrices_<wing_region>.xlsx`
+- `data/cell_geometry/cell_geometry_<wing_region>.csv`
+- `data/wing_region_metadata.csv`
+
+The metadata file should include at least:
+
+- `wing_region`
+- `wing_label`
+- `gap`
+- `n_layers`
+- `default_height`
+- `is_wing_disc`
+- `signalling_labels` (list of cell indices, e.g. `"[1, 5, 9, 12]"`)
+
+### Region selection
+
+In the notebook, `wing_regions` is set explicitly as a list (manual selection).
+For example:
 
 ```python
-import sys
-from pathlib import Path
+# Example set from Paci et al. (2026)
+wing_regions = ['wd_1', 'wd_2', 'wd_3', 'wd_1_mbs', 'wd_2_mbs', 'wd_3_mbs']
 
-repo_root = Path.cwd()
-if not (repo_root / 'src').exists():
-    repo_root = repo_root.parent
-
-sys.path.insert(0, str(repo_root / 'src'))
-from msm_model import *
+# Or a custom subset
+wing_regions = ['wd_1', 'wd_2', 'wd_3']
 ```
 
-### Run from a Python script/session
+Then build dictionaries from these selected regions:
 
-```powershell
-$env:PYTHONPATH="src"
-python -c "import msm_model; print('msm_model import: OK')"
+```python
+wing_discs = list_wing_discs(wing_regions)
+signalling_labels_dict = load_signalling_labels_dict(wing_regions)
+wd_dict = build_wd_label_dict(wing_regions)
+gap_dict = build_gap_dict(wing_regions)
+n_dict = build_n_layers_dict(wing_regions)
+heights_dict = build_default_height_dict(wing_regions)
+
+A_dict = build_adjacency_dict(wing_regions)
+centroids_dict = build_centroids_dict(wing_regions)
+area_apical_dict = build_area_apical_dict(wing_regions)
+diam_apical_dict = build_diam_apical_dict(wing_regions)
 ```
 
-### Data and outputs
+### Notes
 
-- Input datasets are expected under `data/` at repository root.
-- Figures are written to `figures/`.
-- Sensitivity-analysis outputs are written under `data/sensitivity_analysis/`.
+- `notch_data` is notebook-owned and can be edited per dataset/experiment.
+- Figures are saved to `figures/` when `saveQ=True`.
+- Intermediate sensitivity outputs are saved under `data/sensitivity_analysis/`.
 
-### Structure and functionality
-
-The notebook is divided into the following sections:
-
-- **Imports and model access** - Loads dependencies and imports MSM functions from `src/msm_model.py`.
-- **Main simulations** - Runs Notch-Delta simulations for selected wing disc datasets.
-- **Spacing and sensitivity analyses** - Computes SOP spacing and parameter heatmaps.
-- **Visualisation tools** - Produces graph-based and summary plots, saved to `figures/` when enabled.
 
 ## System requirements
 
-This codebase was developed and tested on Pythonâ€¯3.12.3 under both Windowsâ€¯10 and Windowsâ€¯11. No installation procedure is required beyond installing standard Pythonâ€¯3 and the key dependencies. All scripts should remain compatible with standard Pythonâ€¯3 distributions on other operating systems.
+This codebase was developed and tested on Python 3.12.3 under both Windows 10 and Windows 11. No installation procedure is required beyond installing standard Python 3 and the key dependencies. All scripts should remain compatible with standard Python 3 distributions on other operating systems.
 
 ## License
 
