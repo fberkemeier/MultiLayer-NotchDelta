@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/multilayer-notchdelta/badge/?version=latest)](https://multilayer-notchdelta.readthedocs.io/en/latest/?badge=latest)
 
-We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation. For a detailed description of the MSM, see [Paci et al. (2025)](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1) and the [Documentation](https://multilayer-notchdelta.readthedocs.io/en/latest/).
+We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and the emergence of spatial patterns of sensory organ precursor (SOP) cells. For a detailed description of the MSM, see [Paci et al. (2025)](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1) and the [Documentation](https://multilayer-notchdelta.readthedocs.io/en/latest/).
 
 ## Mathematical model
 

@@ -1,7 +1,7 @@
 A Multi-layer Model for Notch-Delta Signalling
 ======================================================================
 
-The Multi-layer Signalling Model (MSM) is a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues. It accounts for depth-resolved cell-cell contacts across apical and lateral surfaces, enabling systematic exploration of how tissue geometry and signalling range influence lateral inhibition and pattern formation.
+The Multi-layer Signalling Model (MSM) is a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues. It accounts for depth-resolved cell-cell contacts across apical and lateral surfaces, enabling systematic exploration of how tissue geometry and signalling range influence lateral inhibition and the emergence of spatial patterns of sensory organ precursor (SOP) cells.
 
 .. toctree::
    :maxdepth: 1
