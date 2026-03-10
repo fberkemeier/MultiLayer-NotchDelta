@@ -4,6 +4,14 @@
 
 We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and the emergence of spatial patterns of sensory organ precursor (SOP) cells. For a detailed description of the MSM, see [Paci et al. (2025)](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1) and the [Documentation](https://multilayer-notchdelta.readthedocs.io/en/latest/).
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" width="500" alt="Multi-layer Signalling Model">
+</p>
+
+<p align="center"><em>
+Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell-cell interactions. Adapted from Paci et al. (2025).
+</em></p>
+
 ## Mathematical model
 
 The dynamics of Notch-Delta signalling within each cell $i$ may be represented by the following system (Collier et al., [1996](https://www.sciencedirect.com/science/article/pii/S0022519396902337), Binshtok & Sprinzak, [2019](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6879322/))
@@ -33,14 +41,6 @@ $$
 $$
 
 for a total number of signalling layers $n$ (layer range), where, at each layer $k$ ($0\leq k\leq n-1$), $\ell_{ij,k}$ is the length of the shared edge between cells $i$ and neighbouring cell $j$, and $P_{j,k}$ is the cross-sectional perimeter of cell $j$ at that layer. $\mathbf{nn}(i)$ is the set of nearest neighbours of cell $i$, and $\omega_k$ is the signalling weight of layer $k$. The total number of signalling layers can be defined by $n=L/\mathrm{\Delta}L$, where $L$ is the actual apical-to-basal length, determined experimentally, and $\mathrm{\Delta}L$ is the width of each layer.
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" width="500" alt="Multi-layer Signalling Model">
-</p>
-
-<p align="center"><em>
-Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell-cell interactions. Adapted from Paci et al. (2025).
-</em></p>
 
 ## Usage
 
