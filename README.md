@@ -1,15 +1,15 @@
-# A Multi-layer Model of Notch-Delta Signalling
+# A Multilayer Model of Notch-Delta Signalling
 
 [![Documentation Status](https://readthedocs.org/projects/multilayer-notchdelta/badge/?version=latest)](https://multilayer-notchdelta.readthedocs.io/en/latest/?badge=latest)
 
-We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multi-layer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and the emergence of spatial patterns of sensory organ precursor (SOP) cells. For a detailed description of the MSM, see [Paci et al. (2025)](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1) and the [Documentation](https://multilayer-notchdelta.readthedocs.io/en/latest/).
+We present a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues using a Multilayer Signalling Model (MSM), which accounts for depth-resolved cell-cell contacts across apical and lateral surfaces. This framework enables systematic exploration of how tissue geometry and signalling range influence lateral inhibition and the emergence of spatial patterns of sensory organ precursor (SOP) cells. For a detailed description of the MSM, see [Paci et al. (2025)](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1) and the [Documentation](https://multilayer-notchdelta.readthedocs.io/en/latest/).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" width="500" alt="Multi-layer Signalling Model">
+  <img src="https://github.com/user-attachments/assets/01b68b32-499a-47fc-aaf1-4430b51d2bd7" width="500" alt="Multilayer Signalling Model">
 </p>
 
 <p align="center"><em>
-Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell-cell interactions. Adapted from Paci et al. (2025).
+Multilayer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell-cell interactions. Adapted from Paci et al. (2025).
 </em></p>
 
 ## Mathematical model
