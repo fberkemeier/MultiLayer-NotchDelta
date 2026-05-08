@@ -1,7 +1,7 @@
-A Multi-layer Model for Notch-Delta Signalling
+A Multilayer Model for Notch-Delta Signalling
 ======================================================================
 
-The Multi-layer Signalling Model (MSM) is a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues. It accounts for depth-resolved cell-cell contacts across apical and lateral surfaces, enabling systematic exploration of how tissue geometry and signalling range influence lateral inhibition and the emergence of spatial patterns of sensory organ precursor (SOP) cells.
+The Multilayer Signalling Model (MSM) is a computational toolkit for simulating and analysing Notch-Delta signalling in three-dimensional epithelial tissues. It accounts for depth-resolved cell-cell contacts across apical and lateral surfaces, enabling systematic exploration of how tissue geometry and signalling range influence lateral inhibition and the emergence of spatial patterns of sensory organ precursor (SOP) cells.
 
 .. toctree::
    :maxdepth: 1
@@ -14,18 +14,18 @@ The Multi-layer Signalling Model (MSM) is a computational toolkit for simulating
    release_notes
 
 .. figure:: _static/img/msm_model.png
-   :alt: Multi-layer Signalling Model schematic placeholder
+   :alt: Multilayer Signalling Model schematic placeholder
    :width: 80%
    :align: center
 
-   Multi-layer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell-cell interactions. Adapted from Paci et al. (2025).
+   Multilayer Signalling Model (MSM) overview. Segmented 3D cellular data across successive tissue layers (left) are used to construct a depth-resolved contact network. The MSM simulates lateral inhibition on this layered structure to predict SOP fate decisions (right), incorporating both apical and lateral cell-cell interactions. Adapted from Paci et al. (2026).
 
 Citation
 ===========
 
 If you use this model or documentation in your work, please cite:
 
-- Paci, G., Berkemeier, F., Baum, B., Page, K.M., & Mao, Y. 3D epithelial cell topology tunes signalling range to promote precise patterning. *bioRxiv* (2025). `doi.org/10.1101/2025.08.08.668674 <https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1>`_
+- Paci, G., Berkemeier, F., Baum, B., Page, K. M., & Mao, Y. 3D epithelial cell topology tunes signaling range to promote precise patterning. *Proceedings of the National Academy of Sciences* 123(19): e2522727123 (2026). `https://www.pnas.org/doi/10.1073/pnas.2522727123 <https://www.pnas.org/doi/10.1073/pnas.2522727123>`_
 
 Bugs, Questions and Comments
 ============================
