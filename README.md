@@ -149,5 +149,5 @@ We welcome discussions via GitHub to improve the model or address potential issu
 
 ## References
 
-Paci, G., Berkemeier, F., Baum, B., Page, K.M., & Mao, Y. 3D epithelial cell topology tunes signalling range to promote precise patterning. _bioRxiv_ (2026). [doi.org/10.1101/2025.08.08.668674](https://www.biorxiv.org/content/10.1101/2025.08.08.668674v1)
+Paci, G., Berkemeier, F., Baum, B., Page, K.M., & Mao, Y. 3D epithelial cell topology tunes signalling range to promote precise patterning. _PNAS_ (2026). [doi.org/10.1073/pnas.252272712](https://doi.org/10.1073/pnas.2522727123)
 
